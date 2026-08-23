@@ -84,8 +84,24 @@ Raspberry Pi 4 DomA images verified on hardware on 2026-08-18 (Dom0 Zephyr / Dom
 four-domain and DomA-only configurations). `PRODUCT_NAME`, `PRODUCT_DEVICE`, the
 installed vendor paths and the file contents are unchanged by the move, so a build from
 this repository produces the same guest images; what changed is where the files come
-from. The manifest wiring itself (the `notdefault,rpi4` project and the group flag) is
-verified by `repo init`/`repo sync` and by `lunch`, not on hardware.
+from.
+
+The move itself -- the `notdefault,rpi4` project and the group flag -- was verified
+without hardware, and this is exactly what was run:
+
+* `repo init -g default,rpi4` resolves 1087 projects and `repo sync device/sodev/xenvm-cf`
+  fetches this repository; the same init without the group resolves 1086 and the project
+  is absent, so no other board is affected.
+* AOSP's own board-config search, run verbatim in that checkout
+  (`find -L device -maxdepth 4 -path '*/xenvm_trout_rpi4_arm64/BoardConfig.mk'`),
+  returns exactly one match.
+* With `device/epam/aosp-xenvm-trout` synced alongside, both the `inherit-product` target
+  and the `include`d board config exist, the two paths the product installs from resolve
+  inside this repository, the upstream device declares neither this product name nor this
+  device name, and it does not install this rc either, so there is no double install.
+
+**Not** run, and therefore not claimed: `lunch`, and a build. A clean Raspberry Pi 4 AOSP
+checkout did not fit on the machine this was prepared on.
 
 ## License
 
