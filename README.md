@@ -86,22 +86,33 @@ installed vendor paths and the file contents are unchanged by the move, so a bui
 this repository produces the same guest images; what changed is where the files come
 from.
 
-The move itself -- the `notdefault,rpi4` project and the group flag -- was verified
-without hardware, and this is exactly what was run:
+The move itself -- the `notdefault,rpi4` project and the group flag -- was verified by a
+build, on 2026-08-26. A clean clone of the SoDeV Raspberry Pi workspace, with a manifest
+that names **this branch**, built `--board=rpi4 --dom0=zephyr -a --aaos=source` to rc=0
+with zero errors and produced a 26.7 GB flashable image. Along the way:
 
-* `repo init -g default,rpi4` resolves 1087 projects and `repo sync device/sodev/xenvm-cf`
-  fetches this repository; the same init without the group resolves 1086 and the project
-  is absent, so no other board is affected.
+* `repo init -g default,rpi4` resolves 1087 projects and syncs this repository; the same
+  init without the group resolves 1086 and the project is absent, so no other board is
+  affected.
 * AOSP's own board-config search, run verbatim in that checkout
   (`find -L device -maxdepth 4 -path '*/xenvm_trout_rpi4_arm64/BoardConfig.mk'`),
   returns exactly one match.
-* With `device/epam/aosp-xenvm-trout` synced alongside, both the `inherit-product` target
-  and the `include`d board config exist, the two paths the product installs from resolve
-  inside this repository, the upstream device declares neither this product name nor this
-  device name, and it does not install this rc either, so there is no double install.
+* `lunch aosp_xenvm_trout_rpi4_arm64-trunk_staging-userdebug` resolves to
+  `TARGET_PRODUCT=aosp_xenvm_trout_rpi4_arm64`, with no "Multiple board config files for
+  TARGET_DEVICE".
+* AOSP finished `build completed successfully (01:23:48)`.
+* `out/target/product/xenvm_trout_rpi4_arm64/vendor/etc/init/init.xenvm-buried-eth0.rc`
+  exists and is md5-identical to the copy in this repository
+  (`c06f8743e7b5789fc8de8690a82e9da1`), so `PRODUCT_COPY_FILES` installs what it names.
+* `aapt2 dump resources` on the built `SettingsProvider.apk` reports
+  `def_bluetooth_on = false` and both animation scales at `0.000000%`, so the
+  `DEVICE_PACKAGE_OVERLAYS` entry takes effect too.
+* The upstream device declares neither this product name nor this device name, and does
+  not install this rc, so there is no collision and no double install.
 
-**Not** run, and therefore not claimed: `lunch`, and a build. A clean Raspberry Pi 4 AOSP
-checkout did not fit on the machine this was prepared on.
+Not run, and therefore not claimed: booting that image on a Raspberry Pi 4. The hardware
+run in the paragraph above predates the move; what the move changes is where the files
+come from, and that is what the build above checks.
 
 ## License
 
